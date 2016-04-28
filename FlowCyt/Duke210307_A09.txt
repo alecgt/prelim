@@ -1,0 +1,6 @@
+Forward Scatter:FSC-H
+Side Scatter:SSC-H
+CD4 FITC:FL1-H
+IFNg+IL-2 PE:FL2-H
+CD8 PerCP-Cy5.5:FL3-H
+CD3 APC:FL4-H

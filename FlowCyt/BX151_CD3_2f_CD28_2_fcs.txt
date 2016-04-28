@@ -1,0 +1,8 @@
+FSC-A
+FSC-H
+SSC-A
+Blue B-A:CFSE
+Blue A-A:CD4 PerCP-Cy5 5
+Violet G-A:aAmine
+Red C-A:CD3 APC
+Green E-A:CD8 PE

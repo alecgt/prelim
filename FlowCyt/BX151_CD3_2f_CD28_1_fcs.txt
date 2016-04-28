@@ -1,0 +1,33 @@
+FSC-A
+FSC-H
+SSC-A
+Blue B-A:CFSE              1
+Blue A-A:CD4 PerCP-Cy5 5   2
+Violet G-A:aAmine          3
+Red C-A:CD3 APC            4
+Green E-A:CD8 PE           5
+
+
+CFSE data
+==========
+
+BX151_CD3_2f_CD28_1_fcs	
+BX151_CD3_2f_CD28_2_fcs	
+
+The objective is to find the relative frequency of the following
+1. viable CD3+CD4+ that have undergone 0, 1, 2, ... divisions
+2. viable CD3+CD8+ that have undergone 0, 1, 2, ... divisions
+
+Useful for nested DP algorithm as there is a definite cluster with
+sub-clusters structure in the data, and it is a relatively smalll data
+set.
+
+Also useful for information metric to see which markers are not needed
+- eyeballing suggests that CD3 contributes little if anything to the
+definition of the subsets of interest, even though this is so
+fundamental to immunology (it is the T cell receptor) that it is
+always included in such panels. If true, this is very useful since
+many flow cytometers have only 3 or 4 fluorescent channel, and being
+able to replace CD3 with another more informative marker would be a
+big deal.
+
