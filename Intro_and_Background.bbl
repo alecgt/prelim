@@ -1,0 +1,27 @@
+\begin{thebibliography}{3}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Neal(2000)]{neal}
+Radford~M Neal.
+\newblock Markov chain sampling methods for dirichlet process mixture models.
+\newblock \emph{Journal of Computational and Graphical Statistics}, 9\penalty0
+  (2):\penalty0 249--265, 2000.
+
+\bibitem[Wang and Dunson(2011)]{wang}
+Lianming Wang and David~B Dunson.
+\newblock Fast bayesian inference in dirichlet process mixture models.
+\newblock \emph{Journal of Computational and Graphical Statistics}, 20\penalty0
+  (1):\penalty0 196--216, 2011.
+
+\bibitem[Zhang et~al.(2014)Zhang, Nott, Yau, and Jasra]{zhang}
+Xiaole Zhang, David~J Nott, Christopher Yau, and Ajay Jasra.
+\newblock A sequential algorithm for fast fitting of dirichlet process mixture
+  models.
+\newblock \emph{Journal of Computational and Graphical Statistics}, 23\penalty0
+  (4):\penalty0 1143--1162, 2014.
+
+\end{thebibliography}
