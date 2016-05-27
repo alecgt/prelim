@@ -11,6 +11,13 @@
 
 \bibliographystyle{plainnat}
 
+\usepackage{color}
+\usepackage{ulem}
+\newcommand{\vmdel}[1]{\sout{#1}}
+\newcommand{\vmadd}[1]{\textbf{\color{red}{#1}}}
+\newcommand{\vmcomment}[1]{({\color{blue}{VM's comment:}} \textbf{\color{blue}{#1}})}
+
+
 \begin{document}
 %%\maketitle
 
@@ -24,7 +31,7 @@
 
 
 \begin{abstract}
-  This paper discusses the motivation, implementation, and analysis of a sequential algorithm for approximate Bayesian inference in Dirichlet process mixture models introduced by \citet{zhang}. Bayesian Dirichlet process mixture models are a popular tool for clustering due to their flexibility, but standard sampling methods for approximating the posterior distribution do not scale well to large data sets. As data continues to grow in many applications, there is increasing interest in computationally efficient methods for fast approximation of the posterior. The authors propose one such method, V-SUGS, which extends a simple sequential algorithm known as SUGS (``sequential update and greedy search") by improving the representation of uncertainty over cluster assignments in the posterior. Comparative analysis of the two algorithms shows that V-SUGS performs better on data whose clusterings are close or overlapping while preserving the attractive computational structure of the original algorithm. Further experiments demonstrate the speed and relative accuracy with which the model can be fit to two large biological data sets.
+  This paper discusses the motivation, implementation, and analysis of a sequential algorithm for approximate Bayesian inference in Dirichlet process mixture models introduced by \citet{zhang}. Bayesian Dirichlet process mixture models are a popular tool for clustering due to their flexibility, but standard sampling methods for approximating the posterior distribution do not scale well to large data sets. As data continues to grow in many applications, there is increasing interest in computationally efficient methods for fast approximation of the posterior \vmadd{distribution of model parameters}. The authors propose one such method, V-SUGS, which extends a simple sequential algorithm known as SUGS (``sequential update and greedy search") by improving the representation of uncertainty over cluster assignments in the posterior. Comparative analysis of the two algorithms shows that V-SUGS performs better on data whose clusterings are close or overlapping while preserving the attractive computational structure of the original algorithm. Further experiments demonstrate the speed and relative accuracy with which the model can be fit to two large biological data sets.
 \end{abstract}
 
 \section{Introduction}
@@ -36,13 +43,15 @@ Finite mixture modeling offers a useful method for the identification of latent 
 
 The nonparametric Bayesian approach to mixture modeling requires a prior over an infinite dimensional mixing distribution. The most common choice of prior is a Dirichlet process, which specifies a distribution over probability measures. Formally, a Dirichlet process parameterized by a concentration parameter $\alpha > 0$ and base measure $F$ on a measurable space $(\mathcal{X}, \mathcal{A})$ is a prior over probability measures $G$ such that for any finite partition $\{A\}_{i=1}^m$ of $\mathcal{A}$,
 $$ (G(A_1), ...,G(A_m)) \sim Dir(\alpha F(A_1), ..., \alpha F(A_m)).$$
-The existence and early characterization of Dirichlet processes is due to \cite{ferguson}, who demonstrated a conjugacy property for the Dirichlet process analogous to the conjugacy of the finite-dimensional Dirichlet distribution for the multinomial distribution. Importantly, this property can be used to show that draws from a Dirichlet process will be discrete with probability 1 \citep{sudderth}. Thus if we define the Dirichlet process mixture model (DPMM)
+The existence and early characterization of Dirichlet processes is due to \cite{ferguson}, who demonstrated a conjugacy property for the Dirichlet process analogous to the conjugacy of the finite-dimensional Dirichlet distribution for the multinomial distribution. Importantly, this property can be used to show that draws from a Dirichlet process will be discrete with probability 1 \citep{sudderth}. Thus if we define the Dirichlet process mixture model (DPMM)\vmadd{,}
 \begin{align} 
-F &\sim DP(\alpha,F_0) \nonumber \\
-\tilde{\theta} &\overset{iid}{\sim} F \nonumber \\
-Y_i | \tilde{\theta} &\overset{ind}{\sim} P(\cdot | \tilde{\theta_i}) \nonumber
+F &\sim DP(\alpha,F_0)\vmadd{,} \nonumber \\
+\tilde{\theta} &\overset{iid}{\sim} F\vmadd{,} \nonumber \\
+Y_i | \tilde{\theta} &\overset{ind}{\sim} P(\cdot | \tilde{\theta_i})\vmadd{,} \nonumber
 \end{align}
-we know that we will observe only a countable number of distinct values of $\tilde{\theta}$. A Polya urn characterization of the Dirichlet process due to \cite{blackwell} shows that the predictive distribution of $\tilde{\theta}_{N+1}$ given observations $\tilde{\theta}_{1},...,\tilde{\theta}_{N}$ is distributed as
+we know that we will observe only a countable number of distinct values of $\tilde{\theta}$. 
+\vmcomment{1) all vectors and matrices should be bolded; 2) $\boldsymbol{\theta}$ and $Y_i$ are not defined; 3) since you are defining a prior here, do you even need $Y_i$ at this point?}
+A Polya urn characterization of the Dirichlet process due to \cite{blackwell} shows that the predictive distribution of $\tilde{\theta}_{N+1}$ given observations $\tilde{\theta}_{1},...,\tilde{\theta}_{N}$ is distributed as
 \begin{align} p(\tilde{\theta}_{N+1} &= \theta| \tilde{\theta}_{1},...,\tilde{\theta}_{N},\alpha,F_0)= \frac{1}{\alpha+N}\left(\alpha f_0(\theta) + \sum_{k=1}^K N_k\delta_{\tilde{\theta}_k} \right), \label{eq:blackwell} \end{align}
 where $N_k$ is the number of previous observations of the value $\tilde{\theta}_k$. The assignment of observations $\tilde{\theta}_N$ to a countable number of distinct values implicitly partitions the observations $Y_i$ according to the value of $\tilde{\theta}_i$; the corresponding distribution over partitions is the well-known Chinese restaurant process (CRP) \citep{pitman}. \cite{lo} demonstrated that after marginalizing over the random measure $F$, the posterior distribution in a Dirichlet process mixture model can be written as the posterior for the partition of the observations multiplied by the product of independent posteriors for each cluster. This is important in practice, as it eliminates the need to work directly with the infinite-dimensional parameter $F$.
 
@@ -68,22 +77,23 @@ where
 $$ p(\theta) = \prod_{j=1}^\infty f_0(\theta_j),$$
 $f_0$ is the density associated with $F_0$, and $p(\delta)$ follows 
 \[ p(\delta_i | \delta_{1:i-1}) = \begin{cases} 
-      \frac{n_j^{(i)}}{\alpha+i-1}& j \in \{1,...,N_i\} \\
-      \frac{\alpha}{\alpha+i-1} & j = N_i +1
+      \frac{n_j^{(i)}}{\alpha+i-1}& j \in \{1,...,N_i\}\vmadd{,} \\
+      \frac{\alpha}{\alpha+i-1} & j = N_i +1\vmadd{,}
    \end{cases}
 \]
 with $p(\delta_1 = 1) = 1$, $n_j^{(i)}$ the number of observations in $y_{1:i-1}$ assigned to cluster $j$, and $N_i$ the number of clusters that have been assigned an observation (sometimes called ``active" clusters) up to time $i$.
 
-The objective of SUGS is to find an approximation $\pi(\theta | \hat{\delta}_{1:i},y_{1:i})$ to the conditional posterior $p(\theta | \delta_{1:i},y_{1:i})$. Importantly, we can write
+The objective of SUGS is to find an approximation $\pi(\theta | \hat{\delta}_{1:i},y_{1:i})$ to the conditional posterior $p(\theta | \delta_{1:i},y_{1:i})$. \vmcomment{Not clear how $\hat{\delta}$s are obtained and why we should give up on the joint posterior of $\boldsymbol{\theta}$ and $\boldsymbol{\delta}$.} Importantly, we can write
 \begin{align} 
 p(\theta | \delta_{1:i},y_{1:i}) &\propto \left[ \prod_{j=1}^i p(y_j | \theta_{\delta_j}) \right] p(\theta) \nonumber \\
 &= \prod_{l=1}^{N_i} \left[ \left[ \prod_{j=1}^i \mathbbm{1}_{(\delta_j = l)} p(y_j | \theta_{\delta_j}) \right] p(\theta_l) \right] \nonumber \\
-&=  \prod_{l=1}^{N_i} p(\theta_l | \delta_{1:i},y_{1:i}) \nonumber
+&=  \prod_{l=1}^{N_i} p(\theta_l | \delta_{1:i},y_{1:i})\vmadd{,} \nonumber
 \end{align}
-which shows that the mixture components are conditionally independent, so that the assignment of an observation to a cluster $l$ only results in an update of the parameters $\theta_l$ associated with that cluster. 
+which shows that the mixture components are conditionally independent \vmcomment{this conditional statement is ambiguous --- not clear what you mean by mixture components, are you talking about $\theta$ parameters?}, so that the assignment of an observation to a cluster $l$ only results in an update of the parameters $\theta_l$ associated with that cluster. 
+\vmcomment{It is not clear how the above full conditional of $\boldsymbol{\theta}$ corresponds to cluster assignment and parameter update. Needs explanation.}
 
-The major challenge of approximating the conditional posterior $p(\theta | \delta_{1:i},y_{1:i})$ lies in addressing the uncertainty in the partition of observations by clusters, $\delta$. SUGS trades speed for any attempted representation of this uncertainty by cycling through the data and sequentially allocating each observation to the cluster that maximizes the conditional allocation probability
-$$ \hat{\pi}_{i,\hat{\delta}_{1:i-1}}(\delta_i | y_{1:i}) \propto p(\delta | \hat{\delta}_{1:i-1}) \int p(y_i | \theta_{\delta_i}) \pi_{i-1,\hat{\delta}_{1:i-1}}(\theta | y_{1:i-1}) d\theta. $$
+The major challenge of approximating the conditional \vmdel{posterior} \vmadd{distribution} $p(\theta | \delta_{1:i},y_{1:i})$ lies in addressing the uncertainty in the partition of observations by clusters, $\delta$. SUGS trades speed for any attempted representation of this uncertainty by cycling through the data and sequentially allocating each observation to the cluster that maximizes the conditional allocation probability
+$$ \hat{\pi}_{i,\hat{\delta}_{1:i-1}}(\delta_i | y_{1:i}) \propto p(\delta_{\vmadd{i}} | \hat{\delta}_{1:i-1}) \int p(y_i | \theta_{\delta_i}) \pi_{i-1,\hat{\delta}_{1:i-1}}(\theta | y_{1:i-1}) d\theta. $$
 
 The complete algorithm is thus given by:
 \medskip
@@ -98,10 +108,13 @@ The complete algorithm is thus given by:
  \caption{Sequential update and greedy search (SUGS)}
 \end{algorithm}
 
+\vmcomment{I would add explicitly everything that Algorithm 1 returns: hard cluster assignments and approximate posteriors of $\boldsymbol{\theta}$s?}
+
 If the mixture components in the DPMM belong to the exponential family and conjugate priors are used, then the approximate posterior densities $\pi(\theta_l |  \hat{\delta}_{1:i},y_{1:i})$ are available in closed form and sufficient statistics can be updated recursively upon the assignment of a new observation to a cluster. The computational efficiency of this algorithm thus becomes clear: it requires only a single pass through the data, making a small number of deterministic calculations at each observation. \cite{wang} consider extensions to SUGS intended to account for uncertainty in the DP hyperparameter $\alpha$ and the sensitivity of the results to data ordering; these considerations are also relevant for V-SUGS, so they will be discussed at the end of this section.
 
 \subsection{Variational Bayes}
 
+\vmcomment{Not clear why you are starting to talk about VB here.}
 Variational Bayes methods are a set of techniques for approximating the intractable integrals that often arise in Bayesian inference \citep{jordan}. Consider a generic setting for Bayesian inference, in which we have model parameters $\xi \in \Xi \subset \mathbb{R}^d$ and observations $y$, and we wish to find $p(\xi | y)$ given a prior density $p(\xi)$ and likelihood $p(y | \xi)$. Broadly, the idea of variational Bayes is to approximate this potentially complex posterior density by a density $\pi(\xi)$ restricted to belong to some simpler, more structured class. In particular, if we divide $\xi$ into blocks $\xi_1,...,\xi_k$, we require that we can write 
 $$ \pi(\xi) = \prod_{j=1}^k q(\xi_j).$$
 Given a known form for the approximating densities $q(\xi_j)$, a particular $\pi(\xi)$ with the above form is obtained by minimization of the Kullback-Leibler divergence
@@ -114,7 +127,7 @@ where $ \mathbb{E}_{-q(\xi_j)}$ denotes expectation with respect to $\prod_{i\ne
 
 \subsection{The V-SUGS algorithm}
 
-In the current paper, \cite{zhang} extend SUGS by incorporating uncertainty in the assignment of observations to clusters; the idea is to make a better choice than the greedy hard assignment of SUGS but to retain the recursive structure that makes it so computationally efficient. The authors propose to replace the hard cluster assignments in SUGS with an uncertain or ``soft" assignment over the available clusters, subsequently taking a variational approach to the problem of recursively updating an approximation to the posterior. The goal of their algorithm, V-SUGS, is to approximate the joint posterior distribution over the cluster assignments $\delta$ and component parameters $\theta$. Taking a variational view of the same recursive updating scheme as SUGS, they suppose that time $i-1$ (or equivalently, after seeing $i-1$ observations) we are given an approximate posterior of the form
+In the current paper, \cite{zhang} extend SUGS by incorporating uncertainty in the assignment of observations to clusters; the idea is to make a better choice than the greedy hard assignment of SUGS but to retain the recursive structure that makes it so computationally efficient. The authors propose to replace the hard cluster assignments in SUGS with an uncertain or ``soft" assignment over the available clusters, subsequently taking a variational approach to the problem of recursively updating an approximation to the posterior. The goal of their algorithm, V-SUGS, is to approximate the joint posterior distribution over the cluster assignments $\delta$ and component parameters $\theta$. Taking a variational view of the same recursive updating scheme as SUGS, they suppose that \vmadd{at} time $i-1$ (or equivalently, after seeing $i-1$ observations) we are given an approximate posterior of the form
 $$ \pi_{i-1}(\delta_{1:i-1},\theta_{1:i-1} | y_{1:i-1}) = \prod_{j=1}^{i-1} q_{i-1}(\delta_j) \prod_{l=1}^T q_{i-1}(\theta_l).$$
 The objective is then to define a procedure that will update this approximate posterior to $\pi_{i}(\delta_{1:i},\theta_{1:i} | y_{1:i})$ given a new observation $y_i$, where this approximation takes the form $\prod_{j=1}^{i} q_{i}(\delta_j) \prod_{l=1}^T q_{i}(\theta_l)$.
 
@@ -122,7 +135,7 @@ It should be noted that the product over component parameters is capped at $T$ t
 $$ p(\theta) = \prod_{l=1}^T f_0(\theta_l)$$
 and $p(\delta)$ is recursively defined with $p(\delta_1 = 1) =1$ and 
 \[ p(\delta_i | \delta_{1:i-1}) = \begin{cases} 
-      \frac{n_j^{(i)}+\alpha/T}{\alpha+i-1}& j \in \{1,...,N_i\} \\
+      \frac{n_j^{(i)}+\alpha/T}{\alpha+i-1}& j \in \{1,...,N_i\}\vmadd{,} \\
       \frac{\alpha(1-N_j/T)}{\alpha+i-1} & j = N_i +1.
    \end{cases}
 \]
@@ -137,7 +150,7 @@ In keeping with the requirement of sequential structure, the choice at time $i$ 
 $$ q_i(\delta_i = l) \propto q_{il} \int p(y_i | \theta_{\delta_l}) q_{i-1}(\theta_{\delta_l}) d\theta_{\delta_l},$$
 where $l \in \{1,..., \min(i,T)\}$ and we define
 \[ q_{il} = \begin{cases} 
-      \frac{\sum_{j=1}^{i-1} q_{i-1}(\delta_j = l)+\alpha/T}{\alpha+i-1}& j \in \{1,...,\min(i,T)\} \\
+      \frac{\sum_{j=1}^{i-1} q_{i-1}(\delta_j = l)+\alpha/T}{\alpha+i-1}& j \in \{1,...,\min(i,T)\}\vmadd{,} \\
       \frac{\alpha(1-\min(i-1,T)/T)}{\alpha+i-1} & j = \min(i,T) +1.
    \end{cases}
 \]
@@ -175,6 +188,7 @@ It is clear from the definition of the two algorithms that SUGS and V-SUGS are c
 \subsubsection{Derivation for DP mixture of Gaussians}
 
 - Question for Vladimir: do I have enough space to include this here? It would probably take an extra page or so. Is it worth including?
+\vmcomment{Variational bit does seem a bit abstract without showing how it works on a concrete example, so I'd say yet. So of your math above can be presented more economically by inlining or splitting equations over fewer lines, so I think you should be able to find space.}
 
 \subsection{Extensions to the algorithm}
 
