@@ -83,6 +83,7 @@ where $ p(\theta) = \prod_{j=1}^\infty f_0(\theta_j),$ with $f_0$ the density as
    \end{cases}
 \]
 for $i = 2,...,n$, with $p(\delta_1 = 1) = 1$, $n_j^{(i)}$ the number of observations in $y_{1:i-1}$ assigned to cluster $j$, and $N_i$ the number of clusters that have been assigned an observation (sometimes called ``active" clusters) up to time $i$.
+\vmcomment{Matrices and vectors should be bolded.}
 
 The objective of SUGS is to find an approximation $\pi(\theta | \hat{\delta}_{1:i},y_{1:i})$ to the conditional posterior $p(\theta | \delta_{1:i},y_{1:i})$; instead of attempting to maintain a joint posterior over $\delta$ and $\theta$, the algorithm specifies a procedure for making a specific choice of cluster assignments $\hat{\delta}_{1:i}$ and approximating the posterior over $\theta$ given these assignments. This is a choice made for simplicity and speed in the algorithm, and it can be thought of as approximating the true posterior over $\delta$ by a point mass at $\hat{\delta}_{1:i}$. For each $i$, SUGS makes a greedy choice for $\hat{\delta}_{i}$ as the argument that maximizes the conditional allocation probability 
 $$ \hat{\pi}_{i,\hat{\delta}_{1:i-1}}(\delta_i | y_{1:i}) \propto p(\delta_{i} | \hat{\delta}_{1:i-1}) \int p(y_i | \theta_{\delta_i}) \pi_{i-1,\hat{\delta}_{1:i-1}}(\theta | y_{1:i-1}) d\theta. $$
@@ -253,14 +254,15 @@ SUGS & & 12.28 & 25.85 & 1458.23 & 2280.36 \\
    & $T=100$& 317.41 &  318.70 & 312.10 & 311.07 \\ 
    \hline
 \end{tabular}
-\caption{\small Computational cost (seconds) of one data set with $N=500$ for SUGS and V-SUGS.}
+\caption{\small Computational cost (seconds) of one data set with $N=500$ for SUGS and V-SUGS.
+\vmcomment{Remind the reader what $T$ is in the caption. Generally, it is better if all captions are self-contained and don't require going to the main text for explanations. Also, do you really need 2 digits after the decimal?}}
 \end{table}
 
 Our implementations of SUGS and V-SUGS appear to to be slower than that of the authors by a factor of 4-5 for SUGS and 3-4 for V-SUGS. Importantly, however, our implementations exhibit the same scaling properties as observed by the authors; specifically, SUGS grows rapidly in computational cost as $\alpha$ increases, while the computational cost of V-SUGS is constant in $\alpha$ but grows linearly with $T$. As expected, both algorithms scale linearly in the length of the data. The constant factor difference in computation cost between our implementations and those of the authors can be traced to two differences in computing setup. First, the authors give hardware specifications that indicate they used a slightly faster machine than the one used for our implementation. Second, and more importantly, the authors implemented their algorithms in Matlab, while we implemented SUGS and V-SUGS in Python. Matlab uses dynamic compilation routines to accelerate looped code chunks where possible, whereas Python lacks any such feature; for sequential algorithms such as SUGS and V-SUGS, this can be expected to yield noticeable differences in speed of execution, even for identically implemented code. 
 
 We proceed to study the relative accuracy of V-SUGS and SUGS for density estimation on the simulated data. The authors quantify accuracy by computing 
 $$ e = \frac{\sum_{i=1}^N (\hat{f}(y_i)-f(y_i))^2}{var(\hat{f})},$$
-where $\hat{f}(y_i)$ and $f(y_i)$ are the predictive and true densities, respectively, evaluated at the observed data points $y_i$. The paper contains no discussion of how $\hat{f}$ is computed for either SUGS or V-SUGS. Our derivation for these quantities follows a related calculation in \cite{west}. Given the (soft or hard) cluster assignments obtained from SUGS or V-SUGS, we obtain the conditional probability of cluster assignment for a new observation from Eq. \ref{eq:blackwell}. For each of these possible clusters, the predictive density is a t-density, as in Eq. \ref{eq:mog_tdens}. The full predictive density is thus given by a mixture of t-densities with parameters that depend on the active model components and the prior, and whose weights correspond to the predictive distribution over cluster assignment given the observed data. 
+where $\hat{f}(y_i)$ and $f(y_i)$ are the predictive and true densities, respectively, evaluated at the observed data points $y_i$. The paper contains no discussion of how $\hat{f}$ is computed for either SUGS or V-SUGS. Our derivation for these quantities follows a related calculation \vmdel{in} \vmadd{by} \cite{west}. Given the (soft or hard) cluster assignments obtained from SUGS or V-SUGS, we obtain the conditional probability of cluster assignment for a new observation from Eq. \eqref{eq:blackwell}. For each of these possible clusters, the predictive density is a t-density, as in Eq. \eqref{eq:mog_tdens}. The full predictive density is thus given by a mixture of t-densities with parameters that depend on the active model components and the prior, and whose weights correspond to the predictive distribution over cluster assignment given the observed data. 
 
 [INSERT DENSITY ESTIMATION FIGURE]
 
@@ -272,7 +274,7 @@ Finally, the authors compare clustering results for SUGS, V-SUGS, and a standard
 
 The first application to real data uses a flow cytometry data set from \cite{manolopoulou}. Flow cytometry is a method by which specific protein structures are detected on individual cell surfaces by fluorescence; a typical run can measure multiple fluorescent markers for millions of cells in a matter of minutes. In this data set, we have 50,000 observations of human peripheral blood cells, each containing measurements for six different markers: forward scatter (which measures cell size), side scatter (which measures cell granularity), CD4 (a marker for helper T cells), IFNg+IL-2 (a marker for effector cytokines), CD8 (a marker for cytotoxic T cells), and CD3 (a marker for all T cells). The data are modeled as arising from a mixture of six-dimensional multivariate Gaussian components. For the current paper, the objective is to compare the performance of SUGS and V-SUGS in terms of density estimation and clustering under this model.
 
-Adaptation of SUGS and V-SUGS to the multivariate setting is straightforward for a Dirichlet process mixture of Gaussians: we replace the normal gamma prior with a normal Wishart prior and derive posterior updates analogous to those in Eqs. \ref{eq:update1}-\ref{eq:update4}. 
+Adaptation of SUGS and V-SUGS to the multivariate setting is straightforward for a Dirichlet process mixture of Gaussians: we replace the normal gamma prior with a normal Wishart prior and derive posterior updates analogous to those in Eqs. \eqref{eq:update1}-\eqref{eq:update4}. 
 
 [INSERT FLOW CYTO FIGS]
 
@@ -281,6 +283,8 @@ Adaptation of SUGS and V-SUGS to the multivariate setting is straightforward for
 The V-SUGS algorithm proposed by \cite{zhang} offers fast approximate inference in Dirichlet process mixture models by sequentially making soft allocations of observations to clusters and computing a variational update to the component parameters. As an extension of SUGS, it enhances the posterior representation of uncertainty over cluster assignments while retaining the recursive structure that is the source of its computational efficiency. This yields particularly meaningful improvements in density estimation and clustering accuracy when the true distribution of the data features clusters that are close together. The authors do not directly compare V-SUGS to any methods apart from SUGS and standard Gibbs sampling, relying instead on indirect comparisons via the experiments of \cite{wang}, who show that SUGS outperforms other sequential methods for inference in DPMMs. However, continued developments in both sampling methodology and approximate inference techniques for DPMMs mean that these comparisons would have been somewhat dated in 2014, when V-SUGS was published. Even so, the authors' contribution of a sequential variational approach to posterior approximation has provided a useful foundation for further research; \cite{lin} and \cite{campbell} have subsequently extended this idea such that the truncation limit no longer needs to be fixed and updates can be performed in a distributed and asynchronous fashion. It remains for future work to address more thoroughly some of the deeper challenges associated with the sequential variational approach, including sensitivity to data ordering and the lack of theoretical controls on error via risk or regret bounds. 
 
 \newpage
+
+\vmcomment{Protect capitalization in the titles. Journal names should have the first letter of each word capitalized.}
 
 \bibliography{stat572}
 
